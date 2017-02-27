@@ -10,6 +10,7 @@ use glium::{DisplayBuild, Surface};
 fn main() {
     let display = glium:: glutin::WindowBuilder::new()
         .with_depth_buffer(24)
+        // .with_dimensions(500, 240)
         .build_glium().unwrap();
 
     #[derive(Copy, Clone)]
@@ -21,30 +22,28 @@ fn main() {
 
     let vertex1 = Vertex { position: [-1.0, -1.0] };
     let vertex2 = Vertex { position: [ 1.0, -1.0] };
-    let vertex3 = Vertex { position: [-1.0,  1.0] };
-    let shape = vec![vertex1, vertex2, vertex3];
+    let vertex3 = Vertex { position: [ 1.0,  1.0] };
+
+    let vertex4 = Vertex { position: [ 1.0,  1.0] };
+    let vertex5 = Vertex { position: [-1.0,  1.0] };
+    let vertex6 = Vertex { position: [-1.0, -1.0] };
+
+    let shape = vec![vertex1, vertex2, vertex3, vertex4, vertex5, vertex6];
 
     let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
-/*
-    let params = glium::DrawParameters {
-        viewport: Some( glium::Rect {
-            left:   0,
-            bottom: 0,
-            width:  640,
-            height: 360
-        }),
-        .. Default::default()
-    };
-*/
+
+    // let params = glium::DrawParameters {
+    //     viewport: Some( glium::Rect { bottom: 0, left: 0, width: 500, height: 240 } ),
+    //     .. Default::default()
+    // };
+
     let program = program!(&display,
         100 => {
             vertex: "
                 #version 100
-
                 attribute lowp vec2 position;
                 varying lowp vec2 my_attr;      // our new attribute
-
                 uniform lowp mat4 matrix;
 
                 void main() {
@@ -55,30 +54,32 @@ fn main() {
 
             fragment: "
                 #version 100
-
                 varying lowp vec2 my_attr;
+                uniform lowp float iGlobalTime;
 
                 void main() {
-                    gl_FragColor = vec4(my_attr, 0.0, 1.0);   // we build a vec4 from a vec2 and two floats
+                    lowp vec2 iResolution = vec2(300.0, 150.0);
+                    lowp vec2 uv = gl_FragCoord.xy / iResolution.xy;
+                    gl_FragColor = vec4(uv,0.5+0.5*sin(iGlobalTime),1.0);
                 }
             ",
         },
     ).expect("Can't compile shader program");
 
-    // let mut t = -0.5;
-    // let mut v = 0.002;
+    let mut t = 0.0f32;
+    let v = 1.0/60.0f32;
 
     set_main_loop_callback(|| {
         // we update `t`
-/*
+
         t += v;
-        if t > 0.5 {
-            v = -v;
-        }
-        if t < -0.5 {
-            v = -v;
-        }
-*/
+        // if t > 0.5 {
+        //     v = -v;
+        // }
+        // if t < -0.5 {
+        //     v = -v;
+        // }
+
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 1.0, 1.0);
 
@@ -89,7 +90,8 @@ fn main() {
                 [0.0, 0.0, 1.0, 0.0],
                 // [ t , 0.0, 0.0, 1.0f32],
                 [0.0, 0.0, 0.0, 1.0f32],
-            ]
+            ],
+            iGlobalTime: t
         };
 
         target.draw(&vertex_buffer, &indices, &program, &uniforms,
