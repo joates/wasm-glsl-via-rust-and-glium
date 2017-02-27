@@ -1,0 +1,13 @@
+# -*- mode: gitignore; -*-
+*~
+target/*
+*/target/*
+*/*/target/*
+Cargo.lock
+log.txt
+out/*
+imgui.ini
+
+triangle.js
+triangle-*.js.map
+triangle.wasm
