@@ -10,7 +10,6 @@ use glium::{DisplayBuild, Surface};
 fn main() {
     let display = glium:: glutin::WindowBuilder::new()
         .with_depth_buffer(24)
-        // .with_dimensions(500, 240)
         .build_glium().unwrap();
 
     #[derive(Copy, Clone)]
@@ -33,28 +32,24 @@ fn main() {
     let vertex_buffer = glium::VertexBuffer::new(&display, &shape).unwrap();
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
-    // let params = glium::DrawParameters {
-    //     viewport: Some( glium::Rect { bottom: 0, left: 0, width: 500, height: 240 } ),
-    //     .. Default::default()
-    // };
+    let params = glium::DrawParameters {
+        viewport: Some( glium::Rect { bottom: 0, left: 0, width: 300, height: 150 } ),
+        .. Default::default()
+    };
 
     let program = program!(&display,
         100 => {
             vertex: "
                 #version 100
                 attribute lowp vec2 position;
-                varying lowp vec2 my_attr;      // our new attribute
-                uniform lowp mat4 matrix;
 
                 void main() {
-                    my_attr = position;     // we need to set the value of each `out` variable.
-                    gl_Position = matrix * vec4(position, 0.0, 1.0);
+                    gl_Position = vec4(position, 0.0, 1.0);
                 }
             ",
 
             fragment: "
                 #version 100
-                varying lowp vec2 my_attr;
                 uniform lowp float iGlobalTime;
 
                 void main() {
@@ -66,37 +61,21 @@ fn main() {
         },
     ).expect("Can't compile shader program");
 
-    let mut t = 0.0f32;
-    let v = 1.0/60.0f32;
+    let mut global_time = 0.0f32;
+    let frame_time = 1.0/60.0f32;
 
     set_main_loop_callback(|| {
-        // we update `t`
 
-        t += v;
-        // if t > 0.5 {
-        //     v = -v;
-        // }
-        // if t < -0.5 {
-        //     v = -v;
-        // }
+        // update timer
+        global_time += frame_time;
 
         let mut target = display.draw();
         target.clear_color(0.0, 0.0, 1.0, 1.0);
 
-        let uniforms = uniform! {
-            matrix: [
-                [1.0, 0.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0],
-                // [ t , 0.0, 0.0, 1.0f32],
-                [0.0, 0.0, 0.0, 1.0f32],
-            ],
-            iGlobalTime: t
-        };
+        let uniforms = uniform! { iGlobalTime: global_time };
 
         target.draw(&vertex_buffer, &indices, &program, &uniforms,
-                    &Default::default()).expect("Can't draw");
-                    // &params).expect("Can't draw");
+                    &params).expect("Can't draw");
         target.finish().expect("Can't finish");
     });
 }
